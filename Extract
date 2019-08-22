@@ -1,0 +1,80 @@
+import numpy as np
+import os
+import pandas as pd
+
+datasets = [ 'Synthetic_small', 'madelon', 'Isolet', 'AR10P', 'PIE10P', 'ORL', 'USPS', 'TOX-171',
+             'lung', 'Carcinom', 'GLIOMA', 'Prostate-GE', 'ALLAML', 'Synthetic' ]
+methods = ['GFS_1000', 'RFS_1000', 'PSO_1', 'PSO_10', 'PSO_100', 'PSO_1000']
+methods_l = ['PSOL_1', 'PSOL_10', 'PSOL_100', 'PSOL_1000']
+runs = 1
+
+for dataset in datasets:
+    nfs = np.array([10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
+    accs = []
+    for method in methods:
+        acc = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        if os.path.exists('/home/nguyenhoai2/Grid/results/SparseFS/'+dataset+'/'+
+                 method+'/1.txt'):
+            f = open('/home/nguyenhoai2/Grid/results/SparseFS/'+dataset+'/'+
+                 method+'/1.txt', 'r')
+            for line in f.readlines():
+                if 'Average accuracy of ' in line:
+                    for nf_index, nf in enumerate(nfs):
+                        if ('Average accuracy of '+str(nf)+' features') in line:
+                            acc[nf_index] += (float(line.split(": ")[1]))
+                            break
+        assert len(acc) == len(nfs)
+        accs.append(acc)
+    accs = np.array(accs)
+    assert accs.shape[0] == len(methods)
+
+    for method in methods_l:
+        if os.path.exists('/home/nguyenhoai2/Grid/results/SparseFS/'+dataset+'/'+
+                 method+'/1.txt'):
+            f = open('/home/nguyenhoai2/Grid/results/SparseFS/'+dataset+'/'+
+                 method+'/1.txt', 'r')
+            fl = f.readlines()
+            for i, line in enumerate(fl):
+                if i == 54:
+                    ave_nf = float(line.split(': ')[1])
+                elif i == 55:
+                    ave_acc = float(line.split(': ')[1])
+                    break
+            nfs = np.append(nfs, ave_nf)
+            accs = np.hstack((accs, np.zeros((accs.shape[0], 1))))
+            acc = np.zeros(len(accs[0]))
+            acc[len(acc)-1] = ave_acc
+            accs = np.vstack((accs, acc))
+        else:
+            nfs = np.append(nfs, 0)
+            accs = np.hstack((accs, np.zeros((accs.shape[0], 1))))
+            acc = np.zeros(len(accs[0]))
+            accs = np.vstack((accs, acc))
+
+    all_methods = np.append(methods, methods_l)
+    assert len(accs) == len(methods) + len(methods_l)
+    df = pd.DataFrame(columns=['Method', 'Nf', 'Acc'])
+
+    print dataset,
+    for method in all_methods:
+        print '\t'+method,
+    print
+    for nf_index, nf in enumerate(nfs):
+        print(nf),
+        for m_index, method in enumerate(all_methods):
+            print '\t'+str(int(accs[m_index][nf_index]*100)/100.0),
+        print
+
+    print
+
+
+    # row_list = {'Method': [], 'Nf': [], 'Acc': []}
+    # for m_index, method in enumerate(all_methods):
+    #     acc = accs[m_index]
+    #     for nf_index, nf in enumerate(nfs):
+    #         row_list['Method'].append(method)
+    #         row_list['Nf'].append(nf)
+    #         row_list['Acc'].append(acc[nf_index])
+    # df = pd.DataFrame(row_list)
+    # print(df.to_latex(index=False))
+
