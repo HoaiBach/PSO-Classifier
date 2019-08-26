@@ -76,7 +76,7 @@ class Swarm:
                 par.w = new_w
                 par.c1 = 2.0
                 par.c2 = 2.0
-                par.fitness, par.loss, par.dist = self.prob.fitness(par.position)
+                par.fitness, par.loss, par.dist = self.prob.fitness(par.position, 0.1)
 
                 # update pbest if necessary
                 if self.prob.is_better(par.fitness, par.pbest_fit):
